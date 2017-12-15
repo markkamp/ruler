@@ -13,11 +13,13 @@
 #define CHAR_BAD        '*'
 #define CHAR_IGNORED    ' '
 #define CHAR_IGNORED1   '['
-#define CHAR_IGNORED2    ']'
+#define CHAR_IGNORED2   ']'
 #define CHAR_FOUND      '_'
 
-static char *mcardGood = "1a [bkg]do[efe]fs[  ]gshnu[j ]ln[b ][w ]a[rv]p[ t]vxwayb[ cb]23bac deghe[ f]jkr[ ln]cmcoi stxuwyf4";
-static char *mcardErr =  "  c               em        w     u   j        z         e        q      z      o        p        ";
+static char *mcardGood;
+static char *mcardErr;
+
+
 
 //01a,01b
 static char *ucard = "1abkgdofsgshnjlnbjarvzvxwaybcb23bacdeghefjkrlncmcoipstuwyf4";
@@ -302,9 +304,35 @@ static bool FindMatchInString(char goodString[], char checkString[], const uint3
     return foundMatch;
 }
 
-int main(void)
+int ParseArguments(int argc, char *argv[])
+{
+    int retVal = 0;
+
+    if (argc != 4) {
+        return -1;
+    }
+
+    /* Skip argument 0. */
+
+    /* Parse argument 1: mcardGood. */
+    mcardGood = argv[1];
+
+    /* Parse argument 2: mcardErr. */
+    mcardErr = argv[2];
+
+    /* Parse argument 2: ucard. */
+    ucard = argv[3];
+
+    return retVal;
+}
+
+int main(int argc, char *argv[])
 {
     uint32_t len;
+
+    if (ParseArguments(argc, argv) == -1) {
+        return 1;
+    }
 
     printf("\nInput:\n");
     printf("     mcardgood: %s\n", mcardGood);
