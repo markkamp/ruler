@@ -16,15 +16,9 @@
 #define CHAR_IGNORED2   ']'
 #define CHAR_FOUND      '_'
 
-static char *mcardGood;
-static char *mcardErr;
-
-
-
-//01a,01b
-static char *ucard = "1abkgdofsgshnjlnbjarvzvxwaybcb23bacdeghefjkrlncmcoipstuwyf4";
-//05a,05b
-//static char *ucard = "1akdoefgmggnwlnbjapzvxwybe23bacdegfjklwmcoipstxuwyf4";
+static char *mcardGood = NULL;
+static char *mcardErr = NULL;
+static char *ucard = NULL;
 
 static char stripped[MAX_STR_LENGTH];
 static char resultucard[MAX_STR_LENGTH];
@@ -46,6 +40,7 @@ static int32_t Compare(const char goodString[], const int32_t startIndexGood,
                        const char checkString[], const int32_t startIndexCheck,
                        const uint32_t checkLength);
 static bool FindMatchInString(char goodString[], char checkString[], const uint32_t checkLength);
+static int ParseArguments(int argc, char *argv[]);
 
 #ifdef MINGW
 /* Required for MINGW. */
@@ -304,9 +299,11 @@ static bool FindMatchInString(char goodString[], char checkString[], const uint3
     return foundMatch;
 }
 
-int ParseArguments(int argc, char *argv[])
+static int ParseArguments(int argc, char *argv[])
 {
     int retVal = 0;
+    size_t strLen = 0;
+    uint32_t i = 0;
 
     if (argc != 4) {
         return -1;
@@ -315,13 +312,45 @@ int ParseArguments(int argc, char *argv[])
     /* Skip argument 0. */
 
     /* Parse argument 1: mcardGood. */
+    strLen = strnlen(argv[1], MAX_STR_LENGTH);
+    if ((strLen == 0) || (strLen >= MAX_STR_LENGTH)) {
+        return -1;
+    }
     mcardGood = argv[1];
+    for (i = 0; i < strLen; i++) {
+        if ((IsIgnoreChar(mcardGood[i]) == false) &&
+            (IsMatchChar(mcardGood[i]) == false)) {
+            mcardGood = NULL;
+            return -1;
+        }
+    }
 
     /* Parse argument 2: mcardErr. */
+    strLen = strnlen(argv[2], MAX_STR_LENGTH);
+    if ((strLen == 0) || (strLen >= MAX_STR_LENGTH)) {
+        return -1;
+    }
     mcardErr = argv[2];
+    for (i = 0; i < strLen; i++) {
+        if ((mcardErr[i] != ' ') &&
+            (IsMatchChar(mcardErr[i]) == false)) {
+            mcardErr = NULL;
+            return -1;
+        }
+    }
 
-    /* Parse argument 2: ucard. */
+    /* Parse argument 3: ucard. */
+    strLen = strnlen(argv[3], MAX_STR_LENGTH);
+    if ((strLen == 0) || (strLen >= MAX_STR_LENGTH)) {
+        return -1;
+    }
     ucard = argv[3];
+    for (i = 0; i < strLen; i++) {
+        if (IsMatchChar(ucard[i]) == false) {
+            ucard = NULL;
+            return -1;
+        }
+    }
 
     return retVal;
 }
