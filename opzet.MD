@@ -10,3 +10,6 @@ Afronden overige gevonden controles:
 - Is het een fout controle?
 
 - Staat de controle x ervoor of erna? (max 4 controlles) Loop je tegen een goede set aan, stop.
+
+
+Bas is very Gitsome...
