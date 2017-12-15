@@ -130,7 +130,7 @@ static int32_t FindNextMatchIndexOfCheckLength(const char string[], const uint32
                                                const uint32_t checkLength)
 {
     int32_t i;
-    int32_t newFromIndex = -1;
+    int32_t newFromIndex = 0;
     int32_t matchLength = 0;
     int32_t index = fromIndex;
     size_t strLen = strnlen(string, MAX_STR_LENGTH);
