@@ -3,5 +3,5 @@ project(ruler)
 
 set(CMAKE_C_STANDARD 99)
 
-set(SOURCE_FILES main.c)
+set(SOURCE_FILES main.c generic.c stage1.c)
 add_executable(ruler ${SOURCE_FILES})
