@@ -12,13 +12,13 @@ static int32_t FindNextMatchIndexOfCheckLength(const char str[], size_t strLen,
 static int32_t Compare(const char mcardDst[], size_t mcardDstLen,
                        const int32_t mcardDstStartIndex,
                        const char ucardDst[], size_t ucardDstLen,
-                       const int32_t ucardDestStartIndex,
+                       const int32_t ucardDstStartIndex,
                        const size_t checkLen);
-static int32_t SetMatchedChars(char mcardDst[], size_t mcardDstLen,
-                               const int32_t mcardDstStartIndex,
-                               char ucardDst[], size_t ucardDstLen,
-                               const int32_t ucardDestStartIndex,
-                               const size_t checkLen);
+static void SetMatchedChars(char mcardDst[], size_t mcardDstLen,
+                            const int32_t mcardDstStartIndex,
+                            char ucardDst[], size_t ucardDstLen,
+                            const int32_t ucardDstStartIndex,
+                            const size_t checkLen);
 static bool MatchStringsOfLength(char mcardDst[], size_t mcardDstLen,
                                  char ucardDst[], size_t ucardDstLen,
                                  const size_t checkLen);
@@ -35,20 +35,20 @@ static bool MatchStringsOfLength(char mcardDst[], size_t mcardDstLen,
  */
 static int32_t FindNextMatchIndex(const char str[], size_t strLen, const uint32_t startIndex)
 {
-    uint32_t i;
+    uint32_t i = 0;
+    int32_t retVal = -1;
 
     assert(str != NULL);
     assert(strLen > 0);
-    assert(startIndex >= 0);
 
-    /* Find first valid character in good. */
     for (i = startIndex; i < strLen; i++) {
         if (IsMatchChar(str[i]) == true) {
-            return i;
+            retVal = i;
+            break;
         }
     }
 
-    return -1;
+    return retVal;
 }
 
 /*!
@@ -69,61 +69,55 @@ static int32_t FindNextMatchIndexOfCheckLength(const char str[], size_t strLen,
                                                const uint32_t startIndex, const size_t checkLen)
 {
     uint32_t i = 0;
-    int32_t newStartIndex = 0;
     uint32_t matchLength = 0;
+    uint32_t newStartIndex = 0;
+    int32_t retVal = -1;
 
     assert(str != NULL);
-    assert(strLen > 0);
-    assert(startIndex >= 0);
-    assert((strLen - startIndex) <= strLen);
     assert(checkLen > 0);
+    assert(strLen > 0);
 
     newStartIndex = startIndex;
-    while (newStartIndex < strLen) {
-        /* Compare all upcoming characters to be a valid character. */
-        for (i = (uint32_t)newStartIndex; i < strLen; i++) {
-            if (IsMatchChar(str[i]) == true) {
-                matchLength++;
+    for (i = newStartIndex; i < strLen; i++) {
+        if (IsMatchChar(str[i]) == true) {
+            matchLength++;
 
-                if (matchLength == checkLen) {
-                    /* Found, so break. */
-                    break;
-                }
-            } else {
-                /* A previously matched character breaks the continues str so stop here. */
+            if (matchLength == checkLen) {
+                /* Found, so break. */
+                retVal = newStartIndex;
                 break;
-            } /* Else continue searching. */
-        }
-
-        if (matchLength == checkLen) {
-            /* Found, so break. */
-            break;
-        }
-
-        /* Find next valid character. */
-        newStartIndex++;
-        matchLength = 0;
-        newStartIndex = FindNextMatchIndex(str, strLen, (uint32_t)newStartIndex);
-        if (newStartIndex == -1) {
-            break;
+            }
+        } else {
+            /* Continue searching, reset matched length and update the start index. */
+            matchLength = 0;
+            newStartIndex = i + 1;
         }
     }
 
-    return newStartIndex;
+    return retVal;
 }
 
 static int32_t Compare(const char mcardDst[], size_t mcardDstLen,
                        const int32_t mcardDstStartIndex,
                        const char ucardDst[], size_t ucardDstLen,
-                       const int32_t ucardDestStartIndex,
+                       const int32_t ucardDstStartIndex,
                        const size_t checkLen)
 {
-    int32_t tmpStartIndexGood = mcardDstStartIndex;
-    int32_t tmpStartIndexCheck = ucardDestStartIndex;
+    int32_t tmpStartIndexGood = 0;
+    int32_t tmpStartIndexCheck = 0;
     uint32_t matchedChars = 0;
-    int32_t ucardDstStartIndex = 0;
+    int32_t newUcardDstStartIndex = 0;
 
-    /* Compare. */
+    assert(mcardDst != NULL);
+    assert(ucardDst != NULL);
+    assert(mcardDstLen > 0);
+    assert(ucardDstLen > 0);
+    assert((mcardDstLen - mcardDstStartIndex) <= mcardDstLen);
+    assert((ucardDstLen - ucardDstStartIndex) <= ucardDstLen);
+    assert(checkLen > 0);
+
+    tmpStartIndexGood = mcardDstStartIndex;
+    tmpStartIndexCheck = ucardDstStartIndex;
     while (matchedChars < checkLen) {
         if (mcardDst[tmpStartIndexGood] == ucardDst[tmpStartIndexCheck]) {
             /* Another character was matched, keep on matching. */
@@ -131,7 +125,7 @@ static int32_t Compare(const char mcardDst[], size_t mcardDstLen,
             tmpStartIndexGood++;
 
             if (matchedChars == 1) {
-                ucardDstStartIndex = tmpStartIndexCheck;
+                newUcardDstStartIndex = tmpStartIndexCheck;
             }
 
             tmpStartIndexGood = FindNextMatchIndex(mcardDst, mcardDstLen,
@@ -156,33 +150,41 @@ static int32_t Compare(const char mcardDst[], size_t mcardDstLen,
     }
 
     if (matchedChars != checkLen) {
-        ucardDstStartIndex = -1;
+        newUcardDstStartIndex = -1;
     }
 
-    return ucardDstStartIndex;
+    return newUcardDstStartIndex;
 }
 
-static int32_t SetMatchedChars(char mcardDst[], size_t mcardDstLen,
-                               const int32_t mcardDstStartIndex,
-                               char ucardDst[], size_t ucardDstLen,
-                               const int32_t ucardDestStartIndex,
-                               const size_t checkLen)
+static void SetMatchedChars(char mcardDst[], size_t mcardDstLen,
+                            const int32_t mcardDstStartIndex,
+                            char ucardDst[], size_t ucardDstLen,
+                            const int32_t ucardDstStartIndex,
+                            const size_t checkLen)
 {
     uint32_t i = 0;
-    int32_t tmpStartIndexGood = mcardDstStartIndex;
-    int32_t tmpStartIndexCheck = ucardDestStartIndex;
-    int32_t nextStartIndexGood = -1;
+    int32_t tmpMcardStartIndex = 0;
+    int32_t tmpStartIndexCheck = 0;
+
+    assert(mcardDst != NULL);
+    assert(ucardDst != NULL);
+    assert(mcardDstLen > 0);
+    assert(ucardDstLen > 0);
+    assert((mcardDstLen - mcardDstStartIndex) <= mcardDstLen);
+    assert((ucardDstLen - ucardDstStartIndex) <= ucardDstLen);
+    assert(checkLen > 0);
+
+    tmpMcardStartIndex = mcardDstStartIndex;
+    tmpStartIndexCheck = ucardDstStartIndex;
 
     /* This should always be true. */
-    assert(mcardDst[tmpStartIndexGood] == ucardDst[tmpStartIndexCheck]);
-    mcardDst[tmpStartIndexGood] = CHAR_FOUND;
+    assert(mcardDst[tmpMcardStartIndex] == ucardDst[tmpStartIndexCheck]);
+    mcardDst[tmpMcardStartIndex] = CHAR_FOUND;
     ucardDst[tmpStartIndexCheck] = CHAR_FOUND;
 
     for (i = 0; i < (checkLen - 1); i++) {
-        nextStartIndexGood = (uint32_t)tmpStartIndexGood;
-
-        tmpStartIndexGood = FindNextMatchIndex(mcardDst, mcardDstLen,
-                                               (uint32_t)tmpStartIndexGood);
+        tmpMcardStartIndex = FindNextMatchIndex(mcardDst, mcardDstLen,
+                                                (uint32_t)tmpMcardStartIndex);
         assert(tmpStartIndexCheck != -1);
 
         tmpStartIndexCheck = FindNextMatchIndex(ucardDst, ucardDstLen,
@@ -190,11 +192,9 @@ static int32_t SetMatchedChars(char mcardDst[], size_t mcardDstLen,
         assert(tmpStartIndexCheck != -1);
 
         /* Set the characters to found. */
-        mcardDst[tmpStartIndexGood] = CHAR_FOUND;
+        mcardDst[tmpMcardStartIndex] = CHAR_FOUND;
         ucardDst[tmpStartIndexCheck] = CHAR_FOUND;
     }
-
-    return nextStartIndexGood;
 }
 
 static bool MatchStringsOfLength(char mcardDst[], size_t mcardDstLen,
@@ -203,8 +203,8 @@ static bool MatchStringsOfLength(char mcardDst[], size_t mcardDstLen,
 {
     bool foundMatch = false;
     int32_t mcardDstStartIndex = 0;
-    int32_t ucardDestStartIndex = 0;
     int32_t ucardDstStartIndex = 0;
+    int32_t newUcardDstStartIndex = 0;
     int32_t nextStartIndexGood = 0;
     size_t len = MIN(mcardDstLen, ucardDstLen);
 
@@ -221,27 +221,25 @@ static bool MatchStringsOfLength(char mcardDst[], size_t mcardDstLen,
         }
 
         /* Find first valid character in check. */
-        ucardDestStartIndex = FindNextMatchIndexOfCheckLength(ucardDst, ucardDstLen, 0, checkLen);
-        if (ucardDestStartIndex == -1) {
+        ucardDstStartIndex = FindNextMatchIndexOfCheckLength(ucardDst, ucardDstLen, 0, checkLen);
+        if (ucardDstStartIndex == -1) {
             break;
         }
 
         /* Compare. */
-        ucardDstStartIndex = Compare(mcardDst, mcardDstLen, mcardDstStartIndex,
-                                     ucardDst, ucardDstLen, ucardDestStartIndex,
-                                     checkLen);
+        newUcardDstStartIndex = Compare(mcardDst, mcardDstLen, mcardDstStartIndex,
+                                        ucardDst, ucardDstLen, ucardDstStartIndex,
+                                        checkLen);
 
-        if (ucardDstStartIndex != -1) {
+        if (newUcardDstStartIndex != -1) {
             /* Match found, set matched characters to CHAR_FOUND. */
-            nextStartIndexGood = SetMatchedChars(mcardDst, mcardDstLen, mcardDstStartIndex,
-                                                 ucardDst, ucardDstLen, ucardDstStartIndex,
-                                                 checkLen);
+            SetMatchedChars(mcardDst, mcardDstLen, mcardDstStartIndex,
+                            ucardDst, ucardDstLen, newUcardDstStartIndex,
+                            checkLen);
             /* Set the return code to true, we did find at least 1 match. */
             foundMatch = true;
 
-            if (nextStartIndexGood == -1) {
-                break;
-            }
+            nextStartIndexGood += checkLen;
         } else {
             assert((mcardDstStartIndex + 1) >= 0);
             nextStartIndexGood = (uint32_t)(mcardDstStartIndex + 1);
