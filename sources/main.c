@@ -122,11 +122,11 @@ int main(int argc, char *argv[])
     printf("         ucard: %s\n", ucard);
 
     /* Perform stage 1: the removal of matched string from max length down to length 3. */
-    MatchStrings(mcard, mcardLen,
-                 ucard, ucardLen,
-                 resultmcard, sizeof(resultucard),
-                 resultucard, sizeof(resultucard),
-                 3);
+    CompareAndMatchStrings(mcard, mcardLen,
+                           ucard, ucardLen,
+                           resultmcard, sizeof(resultucard),
+                           resultucard, sizeof(resultucard),
+                           3);
 
     /* Stage 2. */
     //TODO
